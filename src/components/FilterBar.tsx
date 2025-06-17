@@ -34,6 +34,11 @@ const FilterBar: React.FC<FilterBarProps> = ({
 }) => {
   const hasActiveFilters = statusFilter !== 'all' || typeFilter !== 'all' || tagFilter !== '' || searchQuery !== '';
 
+  const handleTagFilterChange = (value: string) => {
+    // Convert "all-tags" back to empty string for the parent component
+    onTagFilterChange(value === 'all-tags' ? '' : value);
+  };
+
   return (
     <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
       <div className="flex flex-wrap gap-4">
@@ -72,12 +77,12 @@ const FilterBar: React.FC<FilterBarProps> = ({
           </SelectContent>
         </Select>
 
-        <Select value={tagFilter} onValueChange={onTagFilterChange}>
+        <Select value={tagFilter || 'all-tags'} onValueChange={handleTagFilterChange}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Tag" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Tags</SelectItem>
+            <SelectItem value="all-tags">All Tags</SelectItem>
             {availableTags.map((tag) => (
               <SelectItem key={tag} value={tag}>
                 {tag}
