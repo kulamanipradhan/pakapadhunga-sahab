@@ -1,65 +1,58 @@
 
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseLearningData } from '@/hooks/useSupabaseLearningData';
 import { LearningResource } from '@/types/learning';
 import Dashboard from '@/components/Dashboard';
 import ResourceCard from '@/components/ResourceCard';
 import ResourceForm from '@/components/ResourceForm';
 import FilterBar from '@/components/FilterBar';
+import StreakCalendar from '@/components/StreakCalendar';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, BookOpen } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Plus, BookOpen, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
-  const [resources, setResources] = useState<LearningResource[]>([]);
+  const { user, loading: authLoading, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { resources, loading, saveResource, updateResource, logLearningSession } = useSupabaseLearningData();
+  
   const [showForm, setShowForm] = useState(false);
   const [editingResource, setEditingResource] = useState<LearningResource | undefined>();
   const [statusFilter, setStatusFilter] = useState<LearningResource['status'] | 'all'>('all');
   const [typeFilter, setTypeFilter] = useState<LearningResource['type'] | 'all'>('all');
   const [tagFilter, setTagFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const { toast } = useToast();
 
-  // Load resources from localStorage on component mount
   useEffect(() => {
-    const savedResources = localStorage.getItem('learningResources');
-    if (savedResources) {
-      setResources(JSON.parse(savedResources));
+    if (!authLoading && !user) {
+      navigate('/auth');
     }
-  }, []);
+  }, [user, authLoading, navigate]);
 
-  // Save resources to localStorage whenever resources change
-  useEffect(() => {
-    localStorage.setItem('learningResources', JSON.stringify(resources));
-  }, [resources]);
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <BookOpen className="h-12 w-12 text-primary mx-auto mb-4 animate-pulse" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const generateId = () => Math.random().toString(36).substr(2, 9);
+  // Redirect to auth if not logged in
+  if (!user) {
+    return null;
+  }
 
-  const handleSaveResource = (resourceData: Omit<LearningResource, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const now = new Date().toISOString();
-    
+  const handleSaveResource = async (resourceData: Omit<LearningResource, 'id' | 'createdAt' | 'updatedAt'>) => {
     if (editingResource) {
-      setResources(resources.map(r => 
-        r.id === editingResource.id 
-          ? { ...resourceData, id: editingResource.id, createdAt: editingResource.createdAt, updatedAt: now }
-          : r
-      ));
-      toast({
-        title: "Resource updated",
-        description: "Your learning resource has been updated successfully.",
-      });
+      await updateResource(editingResource.id, resourceData);
     } else {
-      const newResource: LearningResource = {
-        ...resourceData,
-        id: generateId(),
-        createdAt: now,
-        updatedAt: now,
-      };
-      setResources([newResource, ...resources]);
-      toast({
-        title: "Resource added",
-        description: "Your new learning resource has been added successfully.",
-      });
+      await saveResource(resourceData);
     }
     
     setShowForm(false);
@@ -71,35 +64,17 @@ const Index = () => {
     setShowForm(true);
   };
 
-  const handleStatusChange = (id: string, status: LearningResource['status']) => {
-    setResources(resources.map(r => 
-      r.id === id 
-        ? { ...r, status, updatedAt: new Date().toISOString() }
-        : r
-    ));
-    
-    const statusMessages = {
-      'not-started': 'Resource marked as not started',
-      'in-progress': 'Started learning! Good luck! 🎯',
-      'completed': 'Congratulations on completing this resource! 🎉'
-    };
-    
-    toast({
-      title: statusMessages[status],
-    });
+  const handleStatusChange = async (id: string, status: LearningResource['status']) => {
+    await updateResource(id, { status });
   };
 
-  const handleTimeLog = (id: string, minutes: number) => {
-    setResources(resources.map(r => 
-      r.id === id 
-        ? { ...r, timeSpent: r.timeSpent + minutes, updatedAt: new Date().toISOString() }
-        : r
-    ));
-    
-    toast({
-      title: "Time logged",
-      description: `Added ${minutes} minutes to your learning time.`,
-    });
+  const handleTimeLog = async (id: string, minutes: number) => {
+    await logLearningSession(id, minutes);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
   };
 
   const handleClearFilters = () => {
@@ -150,23 +125,34 @@ const Index = () => {
               Learning Tracker
             </h1>
             <p className="text-muted-foreground mt-2">
-              Track your self-learning journey across videos, blogs, and courses
+              Welcome back, {user.email}! Track your learning journey and build daily streaks.
             </p>
           </div>
-          <Button onClick={() => setShowForm(true)} size="lg">
-            <Plus className="h-5 w-5 mr-2" />
-            Add Resource
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button onClick={() => setShowForm(true)} size="lg">
+              <Plus className="h-5 w-5 mr-2" />
+              Add Resource
+            </Button>
+            <Button variant="outline" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="dashboard" className="space-y-6">
           <TabsList>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="streak">Streak Calendar</TabsTrigger>
             <TabsTrigger value="resources">Resources ({resources.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">
             <Dashboard resources={resources} />
+          </TabsContent>
+
+          <TabsContent value="streak">
+            <StreakCalendar />
           </TabsContent>
 
           <TabsContent value="resources" className="space-y-6">
@@ -183,7 +169,12 @@ const Index = () => {
               onClearFilters={handleClearFilters}
             />
 
-            {filteredResources.length === 0 ? (
+            {loading ? (
+              <div className="text-center py-12">
+                <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-pulse" />
+                <p className="text-muted-foreground">Loading your resources...</p>
+              </div>
+            ) : filteredResources.length === 0 ? (
               <div className="text-center py-12">
                 <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">
