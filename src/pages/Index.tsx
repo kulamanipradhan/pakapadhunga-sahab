@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSupabaseLearningData } from '@/hooks/useSupabaseLearningData';
@@ -12,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, BookOpen, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import GoalsTab from '@/components/goals/GoalsTab';
 
 const Index = () => {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -143,12 +143,17 @@ const Index = () => {
         <Tabs defaultValue="dashboard" className="space-y-6">
           <TabsList>
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="goals">Goals & Progress</TabsTrigger>
             <TabsTrigger value="streak">Streak Calendar</TabsTrigger>
             <TabsTrigger value="resources">Resources ({resources.length})</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard">
             <Dashboard resources={resources} />
+          </TabsContent>
+
+          <TabsContent value="goals">
+            <GoalsTab />
           </TabsContent>
 
           <TabsContent value="streak">
