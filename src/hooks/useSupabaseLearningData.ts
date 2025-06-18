@@ -32,7 +32,22 @@ export const useSupabaseLearningData = () => {
 
       if (error) throw error;
 
-      setResources(data || []);
+      // Map database columns to LearningResource interface
+      const mappedResources: LearningResource[] = (data || []).map(item => ({
+        id: item.id,
+        title: item.title,
+        type: item.type as LearningResource['type'],
+        url: item.url || '',
+        notes: item.notes || '',
+        status: item.status as LearningResource['status'],
+        deadline: item.deadline || '',
+        tags: item.tags || [],
+        timeSpent: item.time_spent || 0,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at,
+      }));
+
+      setResources(mappedResources);
     } catch (error) {
       console.error('Error fetching resources:', error);
       toast({
@@ -90,7 +105,14 @@ export const useSupabaseLearningData = () => {
       const { error } = await supabase
         .from('learning_resources')
         .update({
-          ...updates,
+          title: updates.title,
+          type: updates.type,
+          url: updates.url,
+          notes: updates.notes,
+          status: updates.status,
+          deadline: updates.deadline,
+          tags: updates.tags,
+          time_spent: updates.timeSpent,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
