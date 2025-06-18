@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSupabaseLearningData } from '@/hooks/useSupabaseLearningData';
@@ -102,7 +103,7 @@ const Index = () => {
 
   if (showForm) {
     return (
-      <div className="min-h-screen bg-background p-4">
+      <div className="min-h-screen bg-background p-2 sm:p-4">
         <ResourceForm
           resource={editingResource}
           onSave={handleSaveResource}
@@ -117,36 +118,53 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-4xl font-bold flex items-center gap-3">
-              <BookOpen className="h-8 w-8 text-primary" />
-              Learning Tracker
+      <div className="container mx-auto p-3 sm:p-6 max-w-7xl">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 sm:mb-8">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-4xl font-bold flex items-center gap-2 sm:gap-3">
+              <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-primary flex-shrink-0" />
+              <span className="truncate">Learning Tracker</span>
             </h1>
-            <p className="text-muted-foreground mt-2">
-              Welcome back, {user.email}! Track your learning journey and build daily streaks.
+            <p className="text-muted-foreground mt-1 sm:mt-2 text-sm sm:text-base">
+              Welcome back, <span className="truncate inline-block max-w-[200px] sm:max-w-none">{user.email}</span>!
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Button onClick={() => setShowForm(true)} size="lg">
-              <Plus className="h-5 w-5 mr-2" />
-              Add Resource
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+            <Button onClick={() => setShowForm(true)} size="sm" className="flex-1 sm:flex-none">
+              <Plus className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden xs:inline">Add Resource</span>
+              <span className="xs:hidden">Add</span>
             </Button>
-            <Button variant="outline" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
+            <Button variant="outline" onClick={handleSignOut} size="sm">
+              <LogOut className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Sign Out</span>
             </Button>
           </div>
         </div>
 
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="goals">Goals & Progress</TabsTrigger>
-            <TabsTrigger value="streak">Streak Calendar</TabsTrigger>
-            <TabsTrigger value="resources">Resources ({resources.length})</TabsTrigger>
-          </TabsList>
+        {/* Tabs */}
+        <Tabs defaultValue="dashboard" className="space-y-4 sm:space-y-6">
+          <div className="overflow-x-auto">
+            <TabsList className="grid w-full grid-cols-4 min-w-[320px]">
+              <TabsTrigger value="dashboard" className="text-xs sm:text-sm">
+                <span className="hidden sm:inline">Dashboard</span>
+                <span className="sm:hidden">Home</span>
+              </TabsTrigger>
+              <TabsTrigger value="goals" className="text-xs sm:text-sm">
+                <span className="hidden sm:inline">Goals & Progress</span>
+                <span className="sm:hidden">Goals</span>
+              </TabsTrigger>
+              <TabsTrigger value="streak" className="text-xs sm:text-sm">
+                <span className="hidden sm:inline">Streak Calendar</span>
+                <span className="sm:hidden">Streak</span>
+              </TabsTrigger>
+              <TabsTrigger value="resources" className="text-xs sm:text-sm">
+                <span className="hidden sm:inline">Resources ({resources.length})</span>
+                <span className="sm:hidden">All ({resources.length})</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="dashboard">
             <Dashboard resources={resources} />
@@ -160,7 +178,7 @@ const Index = () => {
             <StreakCalendar />
           </TabsContent>
 
-          <TabsContent value="resources" className="space-y-6">
+          <TabsContent value="resources" className="space-y-4 sm:space-y-6">
             <FilterBar
               statusFilter={statusFilter}
               typeFilter={typeFilter}
@@ -180,12 +198,12 @@ const Index = () => {
                 <p className="text-muted-foreground">Loading your resources...</p>
               </div>
             ) : filteredResources.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="text-center py-12 px-4">
                 <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">
                   {resources.length === 0 ? 'No learning resources yet' : 'No resources match your filters'}
                 </h3>
-                <p className="text-muted-foreground mb-4">
+                <p className="text-muted-foreground mb-4 text-sm sm:text-base">
                   {resources.length === 0 
                     ? 'Start your learning journey by adding your first resource!'
                     : 'Try adjusting your filters to see more resources.'
@@ -199,7 +217,7 @@ const Index = () => {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
                 {filteredResources.map((resource) => (
                   <ResourceCard
                     key={resource.id}
